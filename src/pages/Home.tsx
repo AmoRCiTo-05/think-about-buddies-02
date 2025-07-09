@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import Hero from '@/components/Hero';
 import { toast } from 'sonner';
 import UserProfileCard from '@/components/UserProfileCard';
 import ThoughtCard from '@/components/ThoughtCard';
@@ -204,33 +205,12 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="pt-24 px-4">
+      {/* Hero Landing Section */}
+      <Hero />
+      
+      <div className="px-4 py-16">
         <div className="container mx-auto max-w-4xl">
           <div className="space-y-8">
-            {/* Welcome Section */}
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gradient mb-4">
-                Welcome to Think@Friend
-              </h1>
-              <p className="text-xl text-muted-foreground mb-6">
-                Discover and share authentic thoughts about trips, people, and places
-              </p>
-              
-              {!user && (
-                <div className="bg-gradient-card p-6 rounded-lg border border-border mb-8">
-                  <h2 className="text-xl font-semibold mb-2">Join the Community</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Sign in to search thoughts, follow users, and share your own experiences
-                  </p>
-                  <Button 
-                    onClick={() => navigate('/auth')}
-                    className="bg-gradient-primary hover:opacity-90"
-                  >
-                    Sign In to Get Started
-                  </Button>
-                </div>
-              )}
-            </div>
 
             {/* Enhanced Search Section */}
             <Card className="bg-gradient-card border-border">
