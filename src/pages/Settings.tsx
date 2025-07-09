@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +39,7 @@ const Settings = () => {
             {/* Account Settings */}
             <Card className="bg-gradient-card border-border">
               <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
+                <CardTitle className="text-xl font-bold">Account Settings</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -48,26 +47,6 @@ const Settings = () => {
                     Manage your account information and preferences.
                   </p>
                   <AccountSettings />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Privacy Settings */}
-            <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle>Privacy & Security</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Control your privacy settings and who can see your content.
-                  </p>
-                  <Button 
-                    variant="outline"
-                    onClick={() => navigate('/privacy')}
-                  >
-                    Privacy Settings
-                  </Button>
                 </div>
               </CardContent>
             </Card>

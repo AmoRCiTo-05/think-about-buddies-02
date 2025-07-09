@@ -1,16 +1,17 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, MapPin, Calendar, MessageSquare, Lock, Globe, RefreshCw, Plus, Users, Camera, Share2 } from 'lucide-react';
+import { User, MapPin, Calendar, MessageSquare, Lock, Globe, RefreshCw, Plus, Users, Camera, Share2, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { toast } from 'sonner';
-import AccountSettings from '@/components/AccountSettings';
 import { Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import EditThoughtDialog from '@/components/EditThoughtDialog';
 
 interface UserProfile {
   id: string;
@@ -35,6 +36,7 @@ interface Thought {
   image_urls: string[];
   images: any;
   created_at: string;
+  updated_at?: string;
 }
 
 const Profile = () => {
@@ -45,6 +47,7 @@ const Profile = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingThought, setDeletingThought] = useState<string | null>(null);
+  const [editingThought, setEditingThought] = useState<Thought | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -119,7 +122,7 @@ const Profile = () => {
         .from('thoughts')
         .delete()
         .eq('id', thoughtId)
-        .eq('user_id', user?.id); // Ensure user can only delete their own thoughts
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
@@ -188,14 +191,14 @@ const Profile = () => {
                   <div className="space-y-2">
                     <CardTitle className="text-2xl text-gradient flex items-center gap-2">
                       <User className="h-6 w-6" />
-                      {profile?.username || 'Loading...'}
+                      <strong>{profile?.username || 'Loading...'}</strong>
                     </CardTitle>
                     {profile?.full_name && (
-                      <p className="text-muted-foreground">{profile.full_name}</p>
+                      <p className="text-muted-foreground font-medium">{profile.full_name}</p>
                     )}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      Joined {new Date(profile?.created_at || '').toLocaleDateString()}
+                      <strong>Joined {new Date(profile?.created_at || '').toLocaleDateString()}</strong>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -207,7 +210,6 @@ const Profile = () => {
                       <Share2 className="h-4 w-4 mr-2" />
                       Share Profile
                     </Button>
-                    <AccountSettings />
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -227,19 +229,19 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary">{thoughts.length}</div>
-                    <div className="text-sm text-muted-foreground">Total Thoughts</div>
+                    <div className="text-sm text-muted-foreground font-medium">Total Thoughts</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary">
                       {thoughts.filter(t => t.privacy === 'public').length}
                     </div>
-                    <div className="text-sm text-muted-foreground">Public Thoughts</div>
+                    <div className="text-sm text-muted-foreground font-medium">Public Thoughts</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary">
                       {thoughts.reduce((total, t) => total + (t.image_urls?.length || 0), 0)}
                     </div>
-                    <div className="text-sm text-muted-foreground">Photos Shared</div>
+                    <div className="text-sm text-muted-foreground font-medium">Photos Shared</div>
                   </div>
                 </div>
               </CardContent>
@@ -250,7 +252,7 @@ const Profile = () => {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  Your Thoughts History ({thoughts.length})
+                  <strong>Your Thoughts History ({thoughts.length})</strong>
                 </CardTitle>
                 <Button onClick={() => navigate('/create')} className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
@@ -278,17 +280,29 @@ const Profile = () => {
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-2">
                               <span className="text-lg">{getTypeIcon(thought.type)}</span>
-                              <h3 className="font-semibold">{thought.title}</h3>
+                              <h3 className="font-bold text-lg">{thought.title}</h3>
                               {thought.privacy === 'private' ? (
                                 <Lock className="h-4 w-4 text-muted-foreground" />
                               ) : (
                                 <Globe className="h-4 w-4 text-green-500" />
                               )}
+                              {thought.updated_at && (
+                                <Badge variant="outline" className="text-xs">
+                                  <strong>EDITED</strong>
+                                </Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline">
+                              <Badge variant="outline" className="font-semibold">
                                 {thought.type === 'other' ? thought.custom_category : thought.type}
                               </Badge>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingThought(thought)}
+                              >
+                                <Edit className="h-4 w-4 text-primary" />
+                              </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
@@ -320,7 +334,7 @@ const Profile = () => {
                             </div>
                           </div>
                           
-                          <p className="text-muted-foreground mb-3 line-clamp-2">
+                          <p className="text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
                             {thought.content}
                           </p>
 
@@ -329,8 +343,8 @@ const Profile = () => {
                             <div className="mb-3">
                               <div className="flex items-center gap-2 mb-2">
                                 <Camera className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">
-                                  {thought.image_urls.length} photo{thought.image_urls.length > 1 ? 's' : ''}
+                                <span className="text-sm text-muted-foreground font-medium">
+                                  <strong>{thought.image_urls.length} photo{thought.image_urls.length > 1 ? 's' : ''}</strong>
                                 </span>
                               </div>
                               <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -344,7 +358,7 @@ const Profile = () => {
                                     {index === 5 && thought.image_urls.length > 6 && (
                                       <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
                                         <span className="text-white text-sm font-medium">
-                                          +{thought.image_urls.length - 6}
+                                          <strong>+{thought.image_urls.length - 6}</strong>
                                         </span>
                                       </div>
                                     )}
@@ -357,7 +371,7 @@ const Profile = () => {
                           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {new Date(thought.created_at).toLocaleDateString()}
+                              <strong>{new Date(thought.created_at).toLocaleDateString()}</strong>
                             </div>
                             
                             {thought.location && (
@@ -397,6 +411,16 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Thought Dialog */}
+      {editingThought && (
+        <EditThoughtDialog
+          open={!!editingThought}
+          onOpenChange={(open) => !open && setEditingThought(null)}
+          thought={editingThought}
+          onUpdate={fetchProfileAndThoughts}
+        />
+      )}
     </div>
   );
 };
