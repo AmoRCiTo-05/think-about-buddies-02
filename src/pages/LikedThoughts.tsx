@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -156,7 +157,6 @@ const LikedThoughts = () => {
                     <ThoughtCard
                       key={thought.id}
                       thought={thought}
-                      onUpdate={fetchLikedThoughts}
                     />
                   ))}
                 </div>
