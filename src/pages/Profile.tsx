@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import EditThoughtDialog from '@/components/EditThoughtDialog';
+import ThoughtDialog from '@/components/ThoughtDialog';
 
 interface UserProfile {
   id: string;
@@ -39,6 +40,19 @@ interface Thought {
   updated_at?: string;
 }
 
+interface ThoughtForDialog {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  location: string;
+  tags: string[];
+  image_urls: string[];
+  created_at: string;
+  username: string;
+  user_full_name: string;
+}
+
 const Profile = () => {
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +62,7 @@ const Profile = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [deletingThought, setDeletingThought] = useState<string | null>(null);
   const [editingThought, setEditingThought] = useState<Thought | null>(null);
+  const [selectedThought, setSelectedThought] = useState<ThoughtForDialog | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -146,6 +161,22 @@ const Profile = () => {
     } catch (error) {
       toast.error('Failed to copy profile link');
     }
+  };
+
+  const handleThoughtClick = (thought: Thought) => {
+    const thoughtForDialog: ThoughtForDialog = {
+      id: thought.id,
+      title: thought.title,
+      content: thought.content,
+      type: thought.type,
+      location: thought.location,
+      tags: thought.tags || [],
+      image_urls: thought.image_urls || [],
+      created_at: thought.created_at,
+      username: profile?.username || 'Unknown',
+      user_full_name: profile?.full_name || 'Unknown User'
+    };
+    setSelectedThought(thoughtForDialog);
   };
 
   const getTypeIcon = (type: string) => {
@@ -275,7 +306,11 @@ const Profile = () => {
                 ) : (
                   <div className="space-y-4">
                     {thoughts.map((thought) => (
-                      <Card key={thought.id} className="bg-secondary/50 hover-lift transition-all">
+                      <Card 
+                        key={thought.id} 
+                        className="bg-secondary/50 hover-lift transition-all cursor-pointer hover:shadow-md"
+                        onClick={() => handleThoughtClick(thought)}
+                      >
                         <CardContent className="pt-4">
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-2">
@@ -292,14 +327,17 @@ const Profile = () => {
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                               <Badge variant="outline" className="font-semibold">
                                 {thought.type === 'other' ? thought.custom_category : thought.type}
                               </Badge>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setEditingThought(thought)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingThought(thought);
+                                }}
                               >
                                 <Edit className="h-4 w-4 text-primary" />
                               </Button>
@@ -309,6 +347,7 @@ const Profile = () => {
                                     variant="outline"
                                     size="sm"
                                     disabled={deletingThought === thought.id}
+                                    onClick={(e) => e.stopPropagation()}
                                   >
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
@@ -419,6 +458,15 @@ const Profile = () => {
           onOpenChange={(open) => !open && setEditingThought(null)}
           thought={editingThought}
           onUpdate={fetchProfileAndThoughts}
+        />
+      )}
+
+      {/* Thought Detail Dialog */}
+      {selectedThought && (
+        <ThoughtDialog
+          open={!!selectedThought}
+          onOpenChange={(open) => !open && setSelectedThought(null)}
+          thought={selectedThought}
         />
       )}
     </div>
