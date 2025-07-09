@@ -1,5 +1,4 @@
 
-
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -119,4 +118,3 @@ const Hero = () => {
 };
 
 export default Hero;
-

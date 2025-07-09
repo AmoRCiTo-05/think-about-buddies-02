@@ -1,5 +1,4 @@
 
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +16,7 @@ import UserProfile from "./pages/UserProfile";
 import CreateThought from "./pages/CreateThought";
 import ThoughtType from "./pages/ThoughtType";
 import PrivacySettings from "./pages/PrivacySettings";
+import Settings from "./pages/Settings";
 import AddDetails from "./pages/AddDetails";
 import WriteThoughts from "./pages/WriteThoughts";
 import ThoughtComplete from "./pages/ThoughtComplete";
@@ -59,6 +59,11 @@ const App = () => (
             <Route path="/privacy" element={
               <ProtectedRoute>
                 <PrivacySettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             } />
             <Route path="/details" element={
@@ -108,4 +113,3 @@ const App = () => (
 );
 
 export default App;
-

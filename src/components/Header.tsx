@@ -92,7 +92,7 @@ const Header = () => {
                         <Users className="mr-2 h-4 w-4" />
                         Followers
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/privacy')}>
+                      <DropdownMenuItem onClick={() => navigate('/settings')}>
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </DropdownMenuItem>
@@ -222,6 +222,17 @@ const Header = () => {
                   >
                     <Users className="h-4 w-4" />
                     <span>Followers</span>
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      navigate('/settings');
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center space-x-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
                   </Button>
                   <Button 
                     onClick={() => {
