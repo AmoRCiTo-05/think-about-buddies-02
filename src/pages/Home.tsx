@@ -1,16 +1,16 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Search, MapPin, Calendar, User, Globe, Camera, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { toast } from 'sonner';
 import UserProfileCard from '@/components/UserProfileCard';
 import ThoughtCard from '@/components/ThoughtCard';
+import SearchWithAutocomplete from '@/components/SearchWithAutocomplete';
 
 interface PublicThought {
   id: string;
@@ -40,7 +40,6 @@ const Home = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [thoughts, setThoughts] = useState<PublicThought[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<PublicThought[]>([]);
   const [userSearchResults, setUserSearchResults] = useState<SearchedUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -129,7 +128,7 @@ const Home = () => {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (searchTerm: string, type: 'thoughts' | 'users') => {
     if (!searchTerm.trim()) {
       setSearchResults([]);
       setUserSearchResults([]);
@@ -144,7 +143,7 @@ const Home = () => {
 
     setIsSearching(true);
     try {
-      if (searchType === 'thoughts') {
+      if (type === 'thoughts') {
         const { data, error } = await supabase.rpc('search_public_thoughts', {
           search_term: searchTerm
         });
@@ -178,15 +177,6 @@ const Home = () => {
       toast.error('An error occurred while searching');
     } finally {
       setIsSearching(false);
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'trip': return '✈️';
-      case 'person': return '👤';
-      case 'place': return '📍';
-      default: return '💭';
     }
   };
 
@@ -246,55 +236,16 @@ const Home = () => {
             <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Search className="h-5 w-5" />
                   Search {searchType === 'thoughts' ? 'Thoughts' : 'Users'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex gap-2 mb-4">
-                    <Button
-                      variant={searchType === 'thoughts' ? 'default' : 'outline'}
-                      onClick={() => setSearchType('thoughts')}
-                      size="sm"
-                    >
-                      Search Thoughts
-                    </Button>
-                    <Button
-                      variant={searchType === 'users' ? 'default' : 'outline'}
-                      onClick={() => setSearchType('users')}
-                      size="sm"
-                    >
-                      Search Users
-                    </Button>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder={
-                        searchType === 'thoughts' 
-                          ? "Search by keywords, places, or users..." 
-                          : "Search users by username or name..."
-                      }
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={handleSearch}
-                      disabled={isSearching}
-                      className="bg-gradient-primary hover:opacity-90"
-                    >
-                      {isSearching ? 'Searching...' : 'Search'}
-                    </Button>
-                  </div>
-                  {!user && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Sign in to search for thoughts and users
-                    </p>
-                  )}
-                </div>
+                <SearchWithAutocomplete
+                  onSearch={handleSearch}
+                  searchType={searchType}
+                  onSearchTypeChange={setSearchType}
+                  isSearching={isSearching}
+                />
               </CardContent>
             </Card>
 
@@ -352,10 +303,10 @@ const Home = () => {
                   <CardContent className="pt-6 text-center">
                     <div className="text-4xl mb-4">🔍</div>
                     <h3 className="text-lg font-semibold mb-2">
-                      {searchResults.length === 0 && searchTerm ? 'No thoughts found' : 'No public thoughts yet'}
+                      {searchResults.length === 0 && searchType === 'thoughts' ? 'No thoughts found' : 'No public thoughts yet'}
                     </h3>
                     <p className="text-muted-foreground">
-                      {searchResults.length === 0 && searchTerm 
+                      {searchResults.length === 0 && searchType === 'thoughts'
                         ? 'Try searching with different keywords'
                         : 'Be the first to share a public thought!'
                       }

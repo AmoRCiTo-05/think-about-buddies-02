@@ -1,11 +1,11 @@
 
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { User, Star, UserPlus, UserMinus, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -34,6 +34,41 @@ const UserProfileCard = ({
   const [isFollowing, setIsFollowing] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user && userId) {
+      checkFollowAndBookmarkStatus();
+    }
+  }, [user, userId]);
+
+  const checkFollowAndBookmarkStatus = async () => {
+    if (!user || !userId) return;
+
+    try {
+      // Check if following
+      const { data: followData } = await supabase
+        .from('user_follows')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', userId)
+        .single();
+
+      setIsFollowing(!!followData);
+
+      // Check if bookmarked
+      const { data: bookmarkData } = await supabase
+        .from('user_bookmarks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('bookmarked_user_id', userId)
+        .single();
+
+      setIsBookmarked(!!bookmarkData);
+    } catch (error) {
+      // Errors are expected when no records exist
+      console.log('No existing follow/bookmark relationships');
+    }
+  };
 
   const handleFollow = async () => {
     if (!user) {
@@ -195,3 +230,4 @@ const UserProfileCard = ({
 };
 
 export default UserProfileCard;
+
