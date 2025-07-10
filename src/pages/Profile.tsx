@@ -179,6 +179,22 @@ const Profile = () => {
     setSelectedThought(thoughtForDialog);
   };
 
+  const formatContent = (content: string) => {
+    // Process the content for markdown bold text (**text**)
+    const processedText = content.split(/(\*\*[^*]+\*\*)/).map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        return (
+          <strong key={index} className="font-bold text-foreground">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+    
+    return processedText;
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'trip': return '✈️';
@@ -298,10 +314,6 @@ const Profile = () => {
                     <p className="text-muted-foreground mb-4">
                       Start sharing your thoughts about trips, people, and places!
                     </p>
-                    <Button onClick={() => navigate('/create')} className="flex items-center gap-2">
-                      <Plus className="h-4 w-4" />
-                      Create Your First Thought
-                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -373,9 +385,9 @@ const Profile = () => {
                             </div>
                           </div>
                           
-                          <p className="text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
-                            {thought.content}
-                          </p>
+                          <div className="text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                            {formatContent(thought.content)}
+                          </div>
 
                           {/* Images Display */}
                           {thought.image_urls && thought.image_urls.length > 0 && (

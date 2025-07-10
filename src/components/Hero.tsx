@@ -30,7 +30,7 @@ const Hero = () => {
                 className="w-fit px-4 py-2 text-sm font-semibold bg-primary/10 text-primary border-primary/20 shadow-sm"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                organize your thoughts
+                Share your thoughts
               </Badge>
               <h1 className="text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
                 <span className="text-gradient">Think</span>
@@ -84,7 +84,7 @@ const Hero = () => {
                   </div>
                   
                   <div className="relative space-y-8">
-                    <div className="text-8xl mb-6 animate-bounce">
+                    <div className="text-8xl mb-6 animate-pulse">
                       💭
                     </div>
                     <div className="space-y-6">
@@ -100,14 +100,16 @@ const Hero = () => {
                         <span className="animate-pulse" style={{ animationDelay: '0.4s' }}>📍</span>
                         <span className="animate-pulse" style={{ animationDelay: '0.6s' }}>❤️</span>
                       </div>
-                      <Button 
-                        onClick={handleGetStarted}
-                        size="lg"
-                        className="bg-gradient-primary hover:opacity-90 font-semibold flex items-center gap-3 px-8 py-4 text-lg shadow-lg"
-                      >
-                        <Plus className="h-5 w-5" />
-                        Create Thought
-                      </Button>
+                      <div className="flex justify-center">
+                        <Button 
+                          onClick={handleGetStarted}
+                          size="lg"
+                          className="bg-gradient-primary hover:opacity-90 font-semibold flex items-center gap-3 px-8 py-4 text-lg shadow-lg"
+                        >
+                          <Plus className="h-5 w-5" />
+                          Create Thought
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

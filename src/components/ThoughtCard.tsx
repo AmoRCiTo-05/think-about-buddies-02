@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Heart, MessageCircle, Share2, MapPin, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import ThoughtDialog from './ThoughtDialog';
 
 interface ThoughtCardProps {
@@ -26,26 +28,134 @@ interface ThoughtCardProps {
   };
 }
 
+interface InteractionCounts {
+  likes_count: number;
+  comments_count: number;
+  shares_count: number;
+}
+
 const ThoughtCard = ({ thought }: ThoughtCardProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 50));
+  const [interactionCounts, setInteractionCounts] = useState<InteractionCounts>({
+    likes_count: 0,
+    comments_count: 0,
+    shares_count: 0
+  });
+  const [loadingInteraction, setLoadingInteraction] = useState(false);
+
+  useEffect(() => {
+    fetchInteractionData();
+  }, [thought.id, user]);
+
+  const fetchInteractionData = async () => {
+    try {
+      // Get interaction counts
+      const { data: countsData, error: countsError } = await supabase
+        .rpc('get_thought_interaction_counts', {
+          thought_ids: [thought.id]
+        });
+
+      if (countsError) {
+        console.error('Error fetching interaction counts:', countsError);
+      } else if (countsData && countsData.length > 0) {
+        const counts = countsData[0];
+        setInteractionCounts({
+          likes_count: parseInt(counts.likes_count) || 0,
+          comments_count: parseInt(counts.comments_count) || 0,
+          shares_count: parseInt(counts.shares_count) || 0
+        });
+      }
+
+      // Check if current user has liked this thought
+      if (user) {
+        const { data: hasLiked, error: likeError } = await supabase
+          .rpc('check_user_interaction', {
+            p_thought_id: thought.id,
+            p_user_id: user.id,
+            p_interaction_type: 'like'
+          });
+
+        if (likeError) {
+          console.error('Error checking user like:', likeError);
+        } else {
+          setIsLiked(hasLiked || false);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching interaction data:', error);
+    }
+  };
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/profile/${thought.username}`);
   };
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-    toast.success(isLiked ? 'Thought unliked' : 'Thought liked!');
+    
+    if (!user) {
+      toast.error('Please sign in to like thoughts');
+      navigate('/auth');
+      return;
+    }
+
+    setLoadingInteraction(true);
+    try {
+      if (isLiked) {
+        // Remove like
+        const { error } = await supabase
+          .from('thought_interactions')
+          .delete()
+          .eq('thought_id', thought.id)
+          .eq('user_id', user.id)
+          .eq('interaction_type', 'like');
+
+        if (error) throw error;
+
+        setIsLiked(false);
+        setInteractionCounts(prev => ({
+          ...prev,
+          likes_count: Math.max(0, prev.likes_count - 1)
+        }));
+        toast.success('Thought unliked');
+      } else {
+        // Add like
+        const { error } = await supabase
+          .from('thought_interactions')
+          .insert({
+            thought_id: thought.id,
+            user_id: user.id,
+            interaction_type: 'like'
+          });
+
+        if (error) throw error;
+
+        setIsLiked(true);
+        setInteractionCounts(prev => ({
+          ...prev,
+          likes_count: prev.likes_count + 1
+        }));
+        toast.success('Thought liked!');
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update like status');
+    } finally {
+      setLoadingInteraction(false);
+    }
   };
 
   const handleComment = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!user) {
+      toast.error('Please sign in to comment');
+      navigate('/auth');
+      return;
+    }
     setIsDialogOpen(true);
     toast.info('Comments feature coming soon!');
   };
@@ -55,8 +165,26 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
     try {
       const shareUrl = `${window.location.origin}/thought/${thought.id}`;
       await navigator.clipboard.writeText(shareUrl);
+      
+      // Track share in database if user is logged in
+      if (user) {
+        await supabase
+          .from('thought_interactions')
+          .insert({
+            thought_id: thought.id,
+            user_id: user.id,
+            interaction_type: 'share'
+          });
+        
+        setInteractionCounts(prev => ({
+          ...prev,
+          shares_count: prev.shares_count + 1
+        }));
+      }
+      
       toast.success('Thought link copied to clipboard!');
     } catch (error) {
+      console.error('Error sharing thought:', error);
       toast.error('Failed to copy link');
     }
   };
@@ -170,9 +298,10 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
                   size="sm" 
                   className={`flex items-center gap-2 ${isLiked ? 'text-red-500 hover:text-red-600' : 'hover:text-red-500'}`}
                   onClick={handleLike}
+                  disabled={loadingInteraction}
                 >
                   <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                  <span className="text-sm">{likeCount}</span>
+                  <span className="text-sm">{interactionCounts.likes_count}</span>
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -181,7 +310,7 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
                   onClick={handleComment}
                 >
                   <MessageCircle className="h-4 w-4" />
-                  <span className="text-sm">Comment</span>
+                  <span className="text-sm">{interactionCounts.comments_count > 0 ? interactionCounts.comments_count : 'Comment'}</span>
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -190,7 +319,7 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
                   onClick={handleShare}
                 >
                   <Share2 className="h-4 w-4" />
-                  <span className="text-sm">Share</span>
+                  <span className="text-sm">{interactionCounts.shares_count > 0 ? interactionCounts.shares_count : 'Share'}</span>
                 </Button>
               </div>
               <Button 
