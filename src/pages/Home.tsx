@@ -187,7 +187,7 @@ const Home = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="pt-24 px-4">
+        <div className="pt-32 px-4">
           <div className="container mx-auto max-w-4xl">
             <div className="animate-pulse space-y-6">
               <div className="h-8 bg-gray-300 rounded w-1/2"></div>

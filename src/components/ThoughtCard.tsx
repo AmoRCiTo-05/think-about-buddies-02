@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Share2, MapPin, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import ThoughtDialog from './ThoughtDialog';
 
 interface ThoughtCardProps {
@@ -28,15 +29,58 @@ interface ThoughtCardProps {
 const ThoughtCard = ({ thought }: ThoughtCardProps) => {
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 50));
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/profile/${thought.username}`);
   };
 
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    toast.success(isLiked ? 'Thought unliked' : 'Thought liked!');
+  };
+
+  const handleComment = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDialogOpen(true);
+    toast.info('Comments feature coming soon!');
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const shareUrl = `${window.location.origin}/thought/${thought.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Thought link copied to clipboard!');
+    } catch (error) {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const formatContent = (content: string) => {
+    // Process the content for markdown bold text (**text**)
+    const processedText = content.split(/(\*\*[^*]+\*\*)/).map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        return (
+          <strong key={index} className="font-bold text-foreground">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+    
+    return processedText;
+  };
+
   const truncateContent = (content: string, maxLength: number = 150) => {
-    if (content.length <= maxLength) return content;
-    return content.slice(0, maxLength) + '...';
+    if (content.length <= maxLength) return formatContent(content);
+    const truncated = content.slice(0, maxLength) + '...';
+    return formatContent(truncated);
   };
 
   return (
@@ -89,9 +133,9 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
 
             {/* Content Preview */}
             <div className="space-y-2">
-              <p className="text-muted-foreground leading-relaxed">
+              <div className="text-muted-foreground leading-relaxed">
                 {truncateContent(thought.content)}
-              </p>
+              </div>
             </div>
 
             {/* Location */}
@@ -121,15 +165,30 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
             {/* Actions */}
             <div className="flex items-center justify-between pt-2 border-t border-border">
               <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" className="flex items-center gap-2 hover:text-red-500">
-                  <Heart className="h-4 w-4" />
-                  <span className="text-sm">Like</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`flex items-center gap-2 ${isLiked ? 'text-red-500 hover:text-red-600' : 'hover:text-red-500'}`}
+                  onClick={handleLike}
+                >
+                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                  <span className="text-sm">{likeCount}</span>
                 </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center gap-2 hover:text-blue-500"
+                  onClick={handleComment}
+                >
                   <MessageCircle className="h-4 w-4" />
                   <span className="text-sm">Comment</span>
                 </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center gap-2 hover:text-green-500"
+                  onClick={handleShare}
+                >
                   <Share2 className="h-4 w-4" />
                   <span className="text-sm">Share</span>
                 </Button>
