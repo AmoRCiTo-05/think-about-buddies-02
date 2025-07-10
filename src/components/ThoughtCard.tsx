@@ -52,37 +52,50 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
 
   const fetchInteractionData = async () => {
     try {
-      // Get interaction counts
-      const { data: countsData, error: countsError } = await supabase
-        .rpc('get_thought_interaction_counts', {
-          thought_ids: [thought.id]
-        });
+      // Get likes count using the existing thought_likes table
+      const { data: likesData, error: likesError } = await supabase
+        .from('thought_likes')
+        .select('*')
+        .eq('thought_id', thought.id);
 
-      if (countsError) {
-        console.error('Error fetching interaction counts:', countsError);
-      } else if (countsData && countsData.length > 0) {
-        const counts = countsData[0];
-        setInteractionCounts({
-          likes_count: parseInt(counts.likes_count) || 0,
-          comments_count: parseInt(counts.comments_count) || 0,
-          shares_count: parseInt(counts.shares_count) || 0
-        });
+      if (likesError) {
+        console.error('Error fetching likes:', likesError);
+      } else {
+        setInteractionCounts(prev => ({
+          ...prev,
+          likes_count: likesData?.length || 0
+        }));
       }
 
       // Check if current user has liked this thought
       if (user) {
-        const { data: hasLiked, error: likeError } = await supabase
-          .rpc('check_user_interaction', {
-            p_thought_id: thought.id,
-            p_user_id: user.id,
-            p_interaction_type: 'like'
-          });
+        const { data: userLike, error: userLikeError } = await supabase
+          .from('thought_likes')
+          .select('*')
+          .eq('thought_id', thought.id)
+          .eq('user_id', user.id)
+          .single();
 
-        if (likeError) {
-          console.error('Error checking user like:', likeError);
+        if (userLikeError && userLikeError.code !== 'PGRST116') {
+          console.error('Error checking user like:', userLikeError);
         } else {
-          setIsLiked(hasLiked || false);
+          setIsLiked(!!userLike);
         }
+      }
+
+      // Get comments count using the existing thought_replies table
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('thought_replies')
+        .select('*')
+        .eq('thought_id', thought.id);
+
+      if (commentsError) {
+        console.error('Error fetching comments:', commentsError);
+      } else {
+        setInteractionCounts(prev => ({
+          ...prev,
+          comments_count: commentsData?.length || 0
+        }));
       }
     } catch (error) {
       console.error('Error fetching interaction data:', error);
@@ -108,11 +121,10 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
       if (isLiked) {
         // Remove like
         const { error } = await supabase
-          .from('thought_interactions')
+          .from('thought_likes')
           .delete()
           .eq('thought_id', thought.id)
-          .eq('user_id', user.id)
-          .eq('interaction_type', 'like');
+          .eq('user_id', user.id);
 
         if (error) throw error;
 
@@ -125,11 +137,10 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
       } else {
         // Add like
         const { error } = await supabase
-          .from('thought_interactions')
+          .from('thought_likes')
           .insert({
             thought_id: thought.id,
-            user_id: user.id,
-            interaction_type: 'like'
+            user_id: user.id
           });
 
         if (error) throw error;
@@ -166,21 +177,11 @@ const ThoughtCard = ({ thought }: ThoughtCardProps) => {
       const shareUrl = `${window.location.origin}/thought/${thought.id}`;
       await navigator.clipboard.writeText(shareUrl);
       
-      // Track share in database if user is logged in
-      if (user) {
-        await supabase
-          .from('thought_interactions')
-          .insert({
-            thought_id: thought.id,
-            user_id: user.id,
-            interaction_type: 'share'
-          });
-        
-        setInteractionCounts(prev => ({
-          ...prev,
-          shares_count: prev.shares_count + 1
-        }));
-      }
+      // Update share count locally (we can implement database tracking later)
+      setInteractionCounts(prev => ({
+        ...prev,
+        shares_count: prev.shares_count + 1
+      }));
       
       toast.success('Thought link copied to clipboard!');
     } catch (error) {
