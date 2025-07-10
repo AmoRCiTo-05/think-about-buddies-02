@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Heart, Instagram, Twitter } from 'lucide-react';
+import { Heart, Instagram, Twitter, Mail } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -38,11 +38,25 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="font-semibold">Connect</h4>
             <div className="flex space-x-3">
-              <Button size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
-                <Instagram className="h-4 w-4" />
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-primary/30 hover:bg-primary/10"
+                asChild
+              >
+                <a href="https://instagram.com/aanshchopra" target="_blank" rel="noopener noreferrer">
+                  <Instagram className="h-4 w-4" />
+                </a>
               </Button>
-              <Button size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
-                <Twitter className="h-4 w-4" />
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-primary/30 hover:bg-primary/10"
+                asChild
+              >
+                <a href="mailto:aanshchopra33@gmail.com">
+                  <Mail className="h-4 w-4" />
+                </a>
               </Button>
             </div>
           </div>
@@ -50,10 +64,17 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <p className="text-sm text-muted-foreground">
-            © 2024 Think@Friend. Made for the real ones.
+            © 2025 Think@Friend. Made for the real ones.
           </p>
           <p className="text-sm text-muted-foreground">
-            Version 1.0 • Built with React & Love
+            Version 1.0 • Built by: Aansh Chopra and <a 
+              href="https://iam-sahil.github.io" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-primary hover:underline"
+            >
+              Sahil Rana
+            </a>
           </p>
         </div>
       </div>

@@ -3,18 +3,40 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Menu, X, User, Sun, Moon, Heart, Star, UserPlus, Users, Settings, LogOut, ChevronDown } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  // Get current page label for profile dropdown
+  const getProfileLabel = () => {
+    const path = location.pathname;
+    switch (path) {
+      case '/profile':
+        return 'Profile';
+      case '/settings':
+        return 'Settings';
+      case '/liked-thoughts':
+        return 'Liked Thoughts';
+      case '/starred-profiles':
+        return 'Starred Profiles';
+      case '/following':
+        return 'Following';
+      case '/followers':
+        return 'Followers';
+      default:
+        return 'Profile';
+    }
   };
 
   return (
@@ -74,7 +96,7 @@ const Header = () => {
                             className="flex items-center space-x-2"
                           >
                             <User className="h-4 w-4" />
-                            <span>Profile</span>
+                            <span>{getProfileLabel()}</span>
                             <ChevronDown className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

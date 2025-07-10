@@ -1,7 +1,6 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import AccountSettings from '@/components/AccountSettings';
@@ -33,23 +32,11 @@ const Settings = () => {
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
-              <h1 className="text-3xl font-bold text-gradient">Settings</h1>
+              <h1 className="text-3xl font-bold text-gradient">Account Settings</h1>
             </div>
 
-            {/* Account Settings */}
-            <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold">Account Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Manage your account information and preferences.
-                  </p>
-                  <AccountSettings />
-                </div>
-              </CardContent>
-            </Card>
+            {/* Account Settings Component */}
+            <AccountSettings />
           </div>
         </div>
       </div>
