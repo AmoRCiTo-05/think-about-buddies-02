@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,8 +32,13 @@ export const useAuth = () => {
   const signUp = async (email: string, password: string, username: string, fullName?: string) => {
     console.log('Attempting signup for:', email, username);
     
-    // Use a more reliable redirect URL that works in both environments
-    const redirectUrl = window.location.origin;
+    // Use production domain for email redirects, fallback to current origin
+    const isProduction = window.location.hostname !== 'localhost';
+    const redirectUrl = isProduction 
+      ? window.location.origin 
+      : 'https://your-production-domain.vercel.app'; // Replace with your actual Vercel domain
+    
+    console.log('Using redirect URL:', redirectUrl);
     
     const { data, error } = await supabase.auth.signUp({
       email,
