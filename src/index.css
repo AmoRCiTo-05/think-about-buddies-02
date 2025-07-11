@@ -78,6 +78,9 @@
     @apply bg-background text-foreground font-sans;
     /* Prevent horizontal scroll on mobile */
     overflow-x: hidden;
+    /* Improve text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html {
@@ -188,7 +191,20 @@
   box-shadow: 0 0 0 2px hsl(var(--ring));
 }
 
-/* Text content truncation */
+/* Text content utilities for overflow handling */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -196,11 +212,38 @@
   overflow: hidden;
 }
 
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Word breaking for long content */
+.break-words {
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Container utilities for responsive design */
+.safe-area {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.full-width-safe {
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
 /* Mobile responsive improvements */
 @media (max-width: 768px) {
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
+    max-width: 100%;
   }
   
   /* Improve touch targets on mobile */
@@ -217,6 +260,18 @@
   .text-7xl {
     font-size: 3rem;
   }
+  
+  /* Prevent horizontal overflow */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Better form inputs on mobile */
+  input, textarea, select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    max-width: 100%;
+  }
 }
 
 /* Ensure proper scaling on all devices */
@@ -231,6 +286,14 @@
   
   .text-2xl {
     font-size: 1.5rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.75rem;
+  }
+  
+  .text-4xl {
+    font-size: 2rem;
   }
 }
 
@@ -257,5 +320,23 @@ input, textarea, select {
   input[type="password"],
   textarea {
     font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+/* Additional responsive utilities */
+@media (max-width: 640px) {
+  .responsive-padding {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .responsive-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .responsive-card {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
   }
 }

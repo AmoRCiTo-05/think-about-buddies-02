@@ -12,6 +12,7 @@ export const useAuth = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -20,6 +21,7 @@ export const useAuth = () => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -29,7 +31,10 @@ export const useAuth = () => {
   }, []);
 
   const signUp = async (email: string, password: string, username: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    console.log('Attempting signup for:', email, username);
+    
+    // Use a more reliable redirect URL that works in both environments
+    const redirectUrl = window.location.origin;
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -43,10 +48,19 @@ export const useAuth = () => {
       }
     });
     
+    console.log('Signup result:', { data, error });
+    
+    // If signup was successful but user needs email confirmation
+    if (data.user && !data.user.email_confirmed_at && !error) {
+      console.log('User created but needs email confirmation');
+    }
+    
     return { data, error };
   };
 
   const signIn = async (emailOrUsername: string, password: string) => {
+    console.log('Attempting signin for:', emailOrUsername);
+    
     // Check if input is email (contains @) or username
     const isEmail = emailOrUsername.includes('@');
     
@@ -56,14 +70,18 @@ export const useAuth = () => {
         email: emailOrUsername,
         password,
       });
+      console.log('Email signin result:', { data, error });
       return { data, error };
     } else {
       // Sign in with username - first get email from profiles table
+      console.log('Looking up username:', emailOrUsername);
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('email')
         .eq('username', emailOrUsername)
         .single();
+      
+      console.log('Username lookup result:', { profileData, profileError });
       
       if (profileError || !profileData?.email) {
         return { 
@@ -77,11 +95,13 @@ export const useAuth = () => {
         email: profileData.email,
         password,
       });
+      console.log('Username signin result:', { data, error });
       return { data, error };
     }
   };
 
   const signOut = async () => {
+    console.log('Signing out user');
     const { error } = await supabase.auth.signOut();
     if (!error) {
       window.location.href = '/auth';

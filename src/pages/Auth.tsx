@@ -26,15 +26,19 @@ const Auth = () => {
     const emailOrUsername = formData.get('emailOrUsername') as string;
     const password = formData.get('password') as string;
 
+    console.log('Form signin attempt:', emailOrUsername);
+
     try {
       const { error } = await signIn(emailOrUsername, password);
       if (error) {
+        console.error('Signin error:', error);
         toast.error(error.message || 'Failed to sign in');
       } else {
         toast.success('Successfully signed in!');
         navigate('/');
       }
     } catch (error) {
+      console.error('Unexpected signin error:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -52,6 +56,8 @@ const Auth = () => {
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
 
+    console.log('Form signup attempt:', email, username);
+
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       setIsLoading(false);
@@ -67,11 +73,13 @@ const Auth = () => {
     try {
       const { error } = await signUp(email, password, username, fullName);
       if (error) {
+        console.error('Signup error:', error);
         toast.error(error.message || 'Failed to sign up');
       } else {
         toast.success('Account created successfully! Please check your email to verify your account.');
       }
     } catch (error) {
+      console.error('Unexpected signup error:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -81,7 +89,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="pt-24 px-4">
+      <div className="pt-20 px-4 sm:pt-24">
         <div className="container mx-auto max-w-md">
           <Button
             variant="ghost"
@@ -94,24 +102,24 @@ const Auth = () => {
 
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin">
               <Card>
-                <CardHeader>
-                  <CardTitle>Welcome Back</CardTitle>
-                  <CardDescription>
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-xl sm:text-2xl">Welcome Back</CardTitle>
+                  <CardDescription className="text-sm">
                     Sign in to your Think@Friend account
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Sign in with</Label>
+                      <Label className="text-sm">Sign in with</Label>
                       <Select value={loginMethod} onValueChange={(value: 'email' | 'username') => setLoginMethod(value)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -122,7 +130,7 @@ const Auth = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="emailOrUsername">
+                      <Label htmlFor="emailOrUsername" className="text-sm">
                         {loginMethod === 'email' ? 'Email' : 'Username'}
                       </Label>
                       <div className="relative">
@@ -136,14 +144,14 @@ const Auth = () => {
                           name="emailOrUsername"
                           type={loginMethod === 'email' ? 'email' : 'text'}
                           placeholder={loginMethod === 'email' ? 'your@email.com' : 'username'}
-                          className="pl-10"
+                          className="pl-10 text-base"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password" className="text-sm">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -151,7 +159,7 @@ const Auth = () => {
                           name="password"
                           type="password"
                           placeholder="Enter your password"
-                          className="pl-10"
+                          className="pl-10 text-base"
                           required
                         />
                       </div>
@@ -171,16 +179,16 @@ const Auth = () => {
 
             <TabsContent value="signup">
               <Card>
-                <CardHeader>
-                  <CardTitle>Create Account</CardTitle>
-                  <CardDescription>
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-xl sm:text-2xl">Create Account</CardTitle>
+                  <CardDescription className="text-sm">
                     Join Think@Friend and start sharing your thoughts
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email" className="text-sm">Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -188,14 +196,14 @@ const Auth = () => {
                           name="email"
                           type="email"
                           placeholder="your@email.com"
-                          className="pl-10"
+                          className="pl-10 text-base"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
+                      <Label htmlFor="username" className="text-sm">Username</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -203,24 +211,25 @@ const Auth = () => {
                           name="username"
                           type="text"
                           placeholder="Choose a unique username"
-                          className="pl-10"
+                          className="pl-10 text-base"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name (Optional)</Label>
+                      <Label htmlFor="fullName" className="text-sm">Full Name (Optional)</Label>
                       <Input
                         id="fullName"
                         name="fullName"
                         type="text"
                         placeholder="Your full name"
+                        className="text-base"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password" className="text-sm">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -228,14 +237,14 @@ const Auth = () => {
                           name="password"
                           type="password"
                           placeholder="At least 6 characters"
-                          className="pl-10"
+                          className="pl-10 text-base"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword" className="text-sm">Confirm Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -243,7 +252,7 @@ const Auth = () => {
                           name="confirmPassword"
                           type="password"
                           placeholder="Confirm your password"
-                          className="pl-10"
+                          className="pl-10 text-base"
                           required
                         />
                       </div>
