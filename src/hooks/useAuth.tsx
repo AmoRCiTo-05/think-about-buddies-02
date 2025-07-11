@@ -1,30 +1,43 @@
+
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+}
+
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    session: null,
+    loading: true,
+  });
 
   useEffect(() => {
-    // Set up auth state listener
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email || 'No user');
+      setAuthState({
+        user: session?.user ?? null,
+        session,
+        loading: false,
+      });
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        console.log('Auth state change:', event, session?.user?.email || 'No user');
+        setAuthState({
+          user: session?.user ?? null,
+          session,
+          loading: false,
+        });
       }
     );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -36,7 +49,7 @@ export const useAuth = () => {
     const isProduction = window.location.hostname !== 'localhost';
     const redirectUrl = isProduction 
       ? window.location.origin 
-      : 'https://your-production-domain.vercel.app'; // Replace with your actual Vercel domain
+      : 'https://thinkfriends.vercel.app';
     
     console.log('Using redirect URL:', redirectUrl);
     
@@ -47,78 +60,74 @@ export const useAuth = () => {
         emailRedirectTo: redirectUrl,
         data: {
           username,
-          full_name: fullName || ''
+          full_name: fullName || username,
         }
-      }
+      },
     });
-    
-    console.log('Signup result:', { data, error });
-    
-    // If signup was successful but user needs email confirmation
-    if (data.user && !data.user.email_confirmed_at && !error) {
-      console.log('User created but needs email confirmation');
+
+    if (error) {
+      console.error('Signup error:', error);
+      throw error;
     }
-    
+
+    console.log('Signup successful:', data);
     return { data, error };
   };
 
-  const signIn = async (emailOrUsername: string, password: string) => {
-    console.log('Attempting signin for:', emailOrUsername);
+  const signIn = async (email: string, password: string) => {
+    console.log('Attempting signin for:', email);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     
-    // Check if input is email (contains @) or username
-    const isEmail = emailOrUsername.includes('@');
-    
-    if (isEmail) {
-      // Sign in with email
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailOrUsername,
-        password,
-      });
-      console.log('Email signin result:', { data, error });
-      return { data, error };
-    } else {
-      // Sign in with username - first get email from profiles table
-      console.log('Looking up username:', emailOrUsername);
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('username', emailOrUsername)
-        .single();
-      
-      console.log('Username lookup result:', { profileData, profileError });
-      
-      if (profileError || !profileData?.email) {
-        return { 
-          data: null, 
-          error: { message: 'Username not found' }
-        };
-      }
-      
-      // Sign in with the found email
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: profileData.email,
-        password,
-      });
-      console.log('Username signin result:', { data, error });
-      return { data, error };
+    if (error) {
+      console.error('Signin error:', error);
+      throw error;
     }
+    
+    console.log('Signin successful:', data);
+    return { data, error };
   };
 
   const signOut = async () => {
     console.log('Signing out user');
     const { error } = await supabase.auth.signOut();
-    if (!error) {
-      window.location.href = '/auth';
+    if (error) {
+      console.error('Signout error:', error);
     }
     return { error };
   };
 
+  const resetPassword = async (email: string) => {
+    console.log('Requesting password reset for:', email);
+    
+    // Use production domain for password reset redirects too
+    const isProduction = window.location.hostname !== 'localhost';
+    const redirectUrl = isProduction 
+      ? `${window.location.origin}/auth?mode=reset` 
+      : 'https://thinkfriends.vercel.app/auth?mode=reset';
+    
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    
+    if (error) {
+      console.error('Password reset error:', error);
+      throw error;
+    }
+    
+    console.log('Password reset email sent:', data);
+    return { data, error };
+  };
+
   return {
-    user,
-    session,
-    loading,
+    user: authState.user,
+    session: authState.session,
+    loading: authState.loading,
     signUp,
     signIn,
-    signOut
+    signOut,
+    resetPassword,
   };
 };
